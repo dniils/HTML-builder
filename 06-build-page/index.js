@@ -68,7 +68,7 @@ function copyFilesFromFolder(fromPath, toPath) {
             const fileCopyPath = path.join(toPath, fileCopy.name);
             const fileInFolderToCopyPath = path.join(fromPath, fileCopy.name);
 
-            fs.stat(fileInFolderToCopyPath, (err, stats) => {
+            fs.stat(fileInFolderToCopyPath, (err) => {
               if (err) {
                 // if file is not present in fromPath, delete it from toPath
                 if (err.code === "ENOENT") {
