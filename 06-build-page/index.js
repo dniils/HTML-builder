@@ -29,12 +29,12 @@ function createShortPathString(path) {
 function copyFilesFromFolder(fromPath, toPath) {
   fs.mkdir(toPath, { recursive: true }, (err) => {
     if (err) {
-      return console.log("🟥 " + err.message);
+      return console.error(`🟥 Error: can't create folder. ${err.message}`);
     }
 
     fs.readdir(fromPath, { withFileTypes: true }, (err, files) => {
       if (err) {
-        return console.log("🟥 " + err.message);
+        return console.error(`🟥 Error: can't read folder. ${err.message}`);
       }
 
       files.forEach((file) => {
@@ -44,17 +44,55 @@ function copyFilesFromFolder(fromPath, toPath) {
 
           fs.copyFile(fileToCopy, newFile, (err) => {
             if (err) {
-              return console.log(`🟥 ${err.message}`);
+              return console.error(
+                `🟥 Error: can't copy file ${fileToCopy}. ${err.message}`
+              );
             }
+
+            console.log(
+              `🟩 ${createShortPathString(
+                fileToCopy
+              )} is copied to ${createShortPathString(newFile)}`
+            );
           });
         }
       });
 
-      console.log(
-        `🟩 Copy: ${createShortPathString(fromPath)} -> ${createShortPathString(
-          toPath
-        )}`
-      );
+      fs.readdir(toPath, { withFileTypes: true }, (err, filesCopy) => {
+        if (err) {
+          return console.error(`🟥 Error: can't read folder. ${err.message}`);
+        }
+
+        filesCopy.forEach((fileCopy) => {
+          if (fileCopy.isFile()) {
+            const fileCopyPath = path.join(toPath, fileCopy.name);
+            const fileInFolderToCopyPath = path.join(fromPath, fileCopy.name);
+
+            fs.stat(fileInFolderToCopyPath, (err, stats) => {
+              if (err) {
+                // if file is not present in fromPath, delete it from toPath
+                if (err.code === "ENOENT") {
+                  fs.unlink(fileCopyPath, (err) => {
+                    if (err) {
+                      return console.error(
+                        `🟥 Error: can't delete file ${fileCopyPath}. ${err.message}`
+                      );
+                    }
+
+                    console.log(
+                      `🟩 Delete: ${createShortPathString(fileCopyPath)}`
+                    );
+                  });
+                } else {
+                  console.error(
+                    `🟥 Error: can't check file ${fileInFolderToCopyPath}. ${err.message}`
+                  );
+                }
+              }
+            });
+          }
+        });
+      });
     });
   });
 }
