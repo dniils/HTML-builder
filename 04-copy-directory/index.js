@@ -34,5 +34,39 @@ fs.mkdir(newFolder, { recursive: true }, (err) => {
         });
       }
     });
+
+    fs.readdir(newFolder, { withFileTypes: true }, (err, filesCopy) => {
+      if (err) {
+        return console.error(`Error: can't read folder: ${err.message}`);
+      }
+
+      filesCopy.forEach((fileCopy) => {
+        if (fileCopy.isFile()) {
+          const fileCopyPath = path.join(newFolder, fileCopy.name);
+          const fileInFolderToCopyPath = path.join(folderToCopy, fileCopy.name);
+
+          fs.stat(fileInFolderToCopyPath, (err, stats) => {
+            if (err) {
+              // if file is not present in folderToCopy, delete it from newFolder
+              if (err.code === "ENOENT") {
+                fs.unlink(fileCopyPath, (err) => {
+                  if (err) {
+                    return console.error(
+                      `Error: can't delete file ${fileCopyPath}: ${err.message}`
+                    );
+                  }
+
+                  console.log(`[...${fileCopyPath.slice(-25)}] is deleted`);
+                });
+              } else {
+                console.error(
+                  `Error: can't check file ${fileInFolderToCopyPath}: ${err.message}`
+                );
+              }
+            }
+          });
+        }
+      });
+    });
   });
 });
